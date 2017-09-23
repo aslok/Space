@@ -5,3 +5,7 @@ html, body{
     background-color: #000;
     overflow: hidden;
 }
+
+#planet_select{
+    margin: 10px;
+}
