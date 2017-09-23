@@ -1,184 +1,207 @@
+var width;
+var height;
+var margin;
+
+// В одном пикселе полторы тысячи километров
+var map = 1500e3;
+
+var planets = [
+    {
+        id: "earth",
+        title: "Земля",
+        mass: 5.9742e24,
+        d: 12742e3,
+        distance: 0,
+        color: "#88ff99",
+        location: {
+            x: 0,
+            y: 0
+        },
+        course: {
+            x: 0,
+            y: 0
+        },
+        speed: {
+            x: 0,
+            y: 0
+        },
+        accel: {
+            x: 0,
+            y: 0
+        },
+    },
+    {
+        id: "moon",
+        title: "Луна",
+        mass: 7.36e22,
+        d: 3474e3,
+        distance: 384.403e6,
+        color: "#fff",
+        location: {
+            x: 0,
+            y: -1
+        },
+        course: {
+            x: 0,
+            y: 0
+        },
+        speed: {
+            x: 1022 * 10,
+            y: 0
+        },
+        accel: {
+            x: 0,
+            y: 0
+        },
+    },
+    {
+        id: "asteroid",
+        title: "Красный астероид",
+        mass: 1e3,
+        d: 1,
+        distance: 260e6,
+        color: "#ff0000",
+        location: {
+            x: 1 / 2,
+            y: -1
+        },
+        course: {
+            x: 0,
+            y: 0
+        },
+        speed: {
+            x: -5e3,
+            y: -1e3
+        },
+        accel: {
+            x: 0,
+            y: 0
+        },
+    },
+    {
+        id: "asteroid2",
+        title: "Берюзовый астероид",
+        mass: 1000e3,
+        d: 50,
+        distance: 150e6,
+        color: "#00ffff",
+        location: {
+            x: 1 / 2,
+            y: 1
+        },
+        course: {
+            x: 0,
+            y: 0
+        },
+        speed: {
+            x: 4e3,
+            y: -8e3
+        },
+        accel: {
+            x: 0,
+            y: 0
+        },
+    },
+    {
+        id: "asteroid3",
+        title: "Синий астероид",
+        mass: 100e3,
+        d: 10,
+        distance: 390e6,
+        color: "#5555ff",
+        location: {
+            x: 2,
+            y: 1
+        },
+        course: {
+            x: 0,
+            y: 0
+        },
+        speed: {
+            x: -1e3,
+            y: -5e3
+        },
+        accel: {
+            x: 0,
+            y: 0
+        },
+    },
+    {
+        id: "asteroid4",
+        title: "Желтый астероид",
+        mass: 1e3,
+        d: 1,
+        distance: 320e6,
+        color: "#ffb300",
+        location: {
+            x: -2,
+            y: 1 / 8
+        },
+        course: {
+            x: 0,
+            y: 0
+        },
+        speed: {
+            x: 5e3,
+            y: 4e3
+        },
+        accel: {
+            x: 0,
+            y: 0
+        },
+    },
+    {
+        id: "asteroid5",
+        title: "Фиолетовый астероид",
+        mass: 5e3,
+        d: 2,
+        distance: 200e6,
+        color: "#ff00ff",
+        location: {
+            x: 1 / -4,
+            y: 1
+        },
+        course: {
+            x: 0,
+            y: 0
+        },
+        speed: {
+            x: -7e3,
+            y: -3e3
+        },
+        accel: {
+            x: 0,
+            y: 0
+        },
+    },
+];
+
 $(function (){
-    $(window).resize(function() {
-        $("#body").
-            height($(window).height() - 10);
-        window.width = $("#body").width();
-        window.height = $("#body").height();
-    });
-
-    $(window).trigger('resize');
-
     var debug = false;
     //var debug = false;
 
-    var freq = 0.05;
-    var draw_freq = 1000;
-    // В одном пикселе три тысячи километров
-    var map = 3000e3;
+    var freq = 0.01;
+    var draw_freq = 100;
     // Гравитационная постоянная
     var G = 6.67408e-11;
-    // Расстояние до луны
-    var l = 384403e3;
-    // Отступы от левого верхнего угла
-    var margin_x = width / 2;
-    var margin_y = height / 2;
 
-    var dots = [
-        {
-            id: "earth",
-            mass: 5.9742e24,
-            d: 12742e3,
-            color: "#88ff44",
-            location: {
-                x: margin_x * map,
-                y: margin_y * map
-            },
-            course: {
-                x: 0,
-                y: 0
-            },
-            speed: {
-                x: 0,
-                y: 0
-            },
-            accel: {
-                x: 0,
-                y: 0
-            },
-        },
-        {
-            id: "moon",
-            mass: 7.36e22,
-            d: 3474e3,
-            color: "#fff",
-            location: {
-                x: margin_x * map,
-                y: margin_y * map - l
-            },
-            course: {
-                x: 0,
-                y: 0
-            },
-            speed: {
-                x: 1022 * 50, // 70 ????
-                y: 0.002698345949026999
-            },
-            accel: {
-                x: 0,
-                y: 0
-            },
-        },
-        {
-            id: "asteroid",
-            mass: 1e3,
-            d: 1,
-            color: "#ff0000",
-            location: {
-                x: margin_x * map + 100 * map,
-                y: margin_y * map - l
-            },
-            course: {
-                x: 0,
-                y: 0
-            },
-            speed: {
-                x: 0,
-                y: 10e3
-            },
-            accel: {
-                x: 0,
-                y: 0
-            },
-        },
-        {
-            id: "asteroid2",
-            mass: 1000e3,
-            d: 50,
-            color: "#ffff00",
-            location: {
-                x: margin_x * map + 100 * map,
-                y: margin_y * map + l
-            },
-            course: {
-                x: 0,
-                y: 0
-            },
-            speed: {
-                x: 0,
-                y: -999e3
-            },
-            accel: {
-                x: 0,
-                y: 0
-            },
-        },
-        {
-            id: "asteroid3",
-            mass: 100e3,
-            d: 10,
-            color: "#0000ff",
-            location: {
-                x: margin_x * map + 200 * map,
-                y: margin_y * map
-            },
-            course: {
-                x: 0,
-                y: 0
-            },
-            speed: {
-                x: -300e3,
-                y: 0
-            },
-            accel: {
-                x: 0,
-                y: 0
-            },
-        },
-        {
-            id: "asteroid4",
-            mass: 1e3,
-            d: 1,
-            color: "#ffb300",
-            location: {
-                x: margin_x * map - 100 * map,
-                y: margin_y * map - 50 * map
-            },
-            course: {
-                x: 0,
-                y: 0
-            },
-            speed: {
-                x: 2e3,
-                y: 0
-            },
-            accel: {
-                x: 0,
-                y: 0
-            },
-        },
-        {
-            id: "asteroid5",
-            mass: 5e3,
-            d: 2,
-            color: "#ff00ff",
-            location: {
-                x: margin_x * map - 100 * map,
-                y: margin_y * map
-            },
-            course: {
-                x: 0,
-                y: 0
-            },
-            speed: {
-                x: 790e3,
-                y: 790e3
-            },
-            accel: {
-                x: 0,
-                y: 0
-            },
-        },
-    ];
+    var cache = {
+        location_map: { },
+        draw_map: { },
+        planet_size: { },
+        planet_selected: "",
+    };
+
+    function uptime(){
+        return time() - time_start;
+    }
+    function time(){
+        return window.performance && window.performance.now &&
+                window.performance.timing && window.performance.timing.navigationStart ?
+                    window.performance.now() + window.performance.timing.navigationStart :
+                    Date.now();
+    }
+    var time_start = time();
 
     function log(mess, val){
         if (!debug){
@@ -216,42 +239,72 @@ $(function (){
     function v_div(v, k){
         return { x: v.x / k, y: v.y / k };
     }
+    // Вектор нулевой?
+    function v_is_null(v){
+        return !v.x && !v.y;
+    }
+    // Копируем вектор
+    function v_clone(v){
+        return { x: v.x, y: v.y };
+    }
+    // Округляем вектор
+    function v_round(v){
+        return { x: Math.round(v.x), y: Math.round(v.y) }
+    }
 
-    dots.forEach(function(item){
-        var d = item.d / map;
-        d < 4 ? d = 4 : 0;
-        $('<div>').
-            attr("id", item.id).
-            css("width", d + "px").
-            css("height", d + "px").
-            css("background-color", item.color).
-            css("-moz-border-radius", d / 2 + "px").
-            css("-webkit-border-radius", d / 2 + "px").
-            css("border-radius", d / 2 + "px").
-            css("position", "absolute").
-            css("left", item.x + "px").
-            css("top", item.y + "px").
-            appendTo("#body");
-    });
-
-    var cache = { };
-
-    function move_dots(){
-        dots.forEach(function(item1, key1, arr){
-            if (item1.location.x < -50 * map                || item1.location.y < -50 * map ||
-                item1.location.x > width * map + 50 * map   || item1.location.y > height * map + 10 * map){
-                return;
+    function planets_calc_size(){
+        planets.forEach(function(item){
+            var min_size = (width > height ? height : width) / 150;
+            var d = item.d / map;
+            d < min_size ? d = min_size : 0;
+            cache.planet_size[item.id] = d;
+        });
+        planets_size();
+    }
+    function planets_create(){
+        cache.planet_selected = "earth";
+        planets.forEach(function(item){
+            if (!v_is_null(item.location)){
+                item.location = v_mult(v_norm(item.location), item.distance);
             }
+            cache.location_map[item.id] = v_round(v_div(item.location, map));
+            cache.draw_map[item.id] = v_clone(cache.location_map[item.id]);
+            $('<div>').
+                attr("id", item.id).
+                css("background-color", item.color).
+                css("position", "absolute").
+                css("left", margin.x + cache.draw_map[item.id].x + "px").
+                css("top", margin.y + cache.draw_map[item.id].y + "px").
+                appendTo("#body");
+            $('<option>').
+                val(item.id).
+                text(item.title).
+                attr("selected", cache.planet_selected == item.id).
+                appendTo("#planet_select");
+            planets_calc_size();
+        });
+    }
+    function planets_size(){
+        planets.forEach(function(item){
+            var r = cache.planet_size[item.id] / 2;
+            $("#" + item.id).
+                css("width", cache.planet_size[item.id] + "px").
+                css("height", cache.planet_size[item.id] + "px").
+                css("-moz-border-radius", r + "px").
+                css("-webkit-border-radius", r + "px").
+                css("border-radius", r + "px");
+        });
+    }
+    function planets_move(){
+        planets.forEach(function(item1, key1, arr){
             for (var key2 = key1 + 1; key2 < arr.length; key2++){
                 var item2 = arr[key2];
-                if (item2.location.x < -10 * map                || item2.location.y < -10 * map ||
-                    item2.location.x > width * map - 10 * map   || item2.location.y > height * map - 10 * map){
-                    continue;
-                }
                 log("=========================================================");
 
                 item1.course = v_norm(vv_diff(item1.location, item2.location));
                 item2.course = v_norm(vv_diff(item2.location, item1.location));
+                log("item1.course", item1.course);
+                log("item2.course", item1.course);
 
                 var r = vv_length(item1.location, item2.location);
                 /*if (r > l * 2){
@@ -270,42 +323,59 @@ $(function (){
                 log("accel2", accel2);
                 item1.accel = vv_sum(item1.accel, v_div(accel1, freq));
                 item2.accel = vv_sum(item2.accel, v_div(accel2, freq));
-
-                item1.speed = vv_sum(item1.speed, v_div(item1.accel, freq));
-                item2.speed = vv_sum(item2.speed, v_div(item2.accel, freq));
-
-                item1.location = vv_sum(item1.location, v_div(item1.speed, freq));
-                item2.location = vv_sum(item2.location, v_div(item2.speed, freq));
-                // log("", );
-                log("item1.location", item1.location);
-                log("item1.course", item1.course);
-                log("item1.speed", item1.speed);
-                log("item1.accel", item1.accel);
-                log("item2.location", item2.location);
-                log("item2.course", item2.course);
-                log("item2.speed", item2.speed);
-                log("item2.accel", item2.accel);
-
-                if (typeof cache[item1.id] == "undefined" ||
-                    Math.round(cache[item1.id].x) != Math.round(item1.location.x) ||
-                    Math.round(cache[item1.id].y) != Math.round(item1.location.y)){
-                    cache[item1.id] = { x: item1.location.x, y: item1.location.y };
-                    var i1 = $("#" + item1.id);
-                    i1.css("left", item1.location.x / map + "px");
-                    i1.css("top", item1.location.y / map + "px");
-                }
-                if (typeof cache[item2.id] == "undefined" ||
-                    Math.round(cache[item2.id].x) != Math.round(item2.location.x) ||
-                    Math.round(cache[item2.id].y) != Math.round(item2.location.y)){
-                    cache[item2.id] = { x: item2.location.x, y: item2.location.y };
-                    var i2 = $("#" + item2.id);
-                    i2.css("left", item2.location.x / map + "px");
-                    i2.css("top", item2.location.y / map + "px");
-                }
             }
         });
-        setTimeout(move_dots, 1000 / draw_freq);
+        planets.forEach(function(item){
+            log("=========================================================");
+
+            item.speed = vv_sum(item.speed, v_div(item.accel, freq));
+            log("item.speed", item.speed);
+            log("item.accel", item.accel);
+            item.accel = v_mult(item.accel, 0);
+
+            item.location = vv_sum(item.location, v_div(item.speed, freq));
+            log("item.location", item.location);
+            cache.location_map[item.id] = v_round(v_div(item.location, map));
+            // log("", );
+        });
+        var padding = vv_diff(cache.location_map[cache.planet_selected], margin);
+        if (!v_is_null(padding)){
+            planets.forEach(function(item){
+                item.location = vv_sum(item.location, v_mult(padding, map));
+                cache.location_map[item.id] = v_round(v_div(item.location, map));
+            });
+        }
+        planets.forEach(function(item){
+            if (cache.location_map[item.id].x > -5 && cache.location_map[item.id].y > -5 &&
+                cache.location_map[item.id].x < width + 5 && cache.location_map[item.id].y < height + 5){
+                    if (!v_is_null(vv_diff(cache.location_map[item.id], cache.draw_map[item.id]))){
+                        cache.draw_map[item.id] = v_clone(cache.location_map[item.id]);
+                        $("#" + item.id).
+                            show().
+                            css("left", cache.draw_map[item.id].x + "px").
+                            css("top", cache.draw_map[item.id].y + "px");
+                    }
+            }else{
+                $("#" + item.id).
+                    hide();
+            }
+        });
+        setTimeout(planets_move, 1000 / draw_freq);
     }
+
+    $("#planet_select").change(function() {
+        cache.planet_selected = $("#planet_select").val();
+    });
+    $(window).resize(function() {
+        $("#body").
+            height($(window).height() - 10);
+        width = $("#body").width();
+        height = $("#body").height();
+        margin = { x: Math.round(width / 2), y: Math.round(height / 2) };
+        planets_calc_size();
+    });
     log("======================= START ============================");
-    move_dots();
+    $(window).trigger('resize');
+    planets_create();
+    planets_move();
 });
