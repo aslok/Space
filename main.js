@@ -4,14 +4,14 @@ var margin;
 
 // В одном пикселе полторы тысячи километров
 var map = 1500e3;
-// Расстояние до луны
-var l = 384403e3;
 
 var planets = [
     {
         id: "earth",
+        title: "Земля",
         mass: 5.9742e24,
         d: 12742e3,
+        distance: 0,
         color: "#88ff99",
         location: {
             x: 0,
@@ -32,12 +32,14 @@ var planets = [
     },
     {
         id: "moon",
+        title: "Луна",
         mass: 7.36e22,
         d: 3474e3,
+        distance: 384.403e6,
         color: "#fff",
         location: {
             x: 0,
-            y: -l
+            y: -1
         },
         course: {
             x: 0,
@@ -54,12 +56,14 @@ var planets = [
     },
     {
         id: "asteroid",
+        title: "Красный астероид",
         mass: 1e3,
         d: 1,
+        distance: 260e6,
         color: "#ff0000",
         location: {
-            x: l / 2,
-            y: -l
+            x: 1 / 2,
+            y: -1
         },
         course: {
             x: 0,
@@ -76,12 +80,14 @@ var planets = [
     },
     {
         id: "asteroid2",
+        title: "Берюзовый астероид",
         mass: 1000e3,
         d: 50,
+        distance: 150e6,
         color: "#00ffff",
         location: {
-            x: l / 2,
-            y: l
+            x: 1 / 2,
+            y: 1
         },
         course: {
             x: 0,
@@ -98,12 +104,14 @@ var planets = [
     },
     {
         id: "asteroid3",
+        title: "Синий астероид",
         mass: 100e3,
         d: 10,
+        distance: 390e6,
         color: "#5555ff",
         location: {
-            x: l * 2,
-            y: 0
+            x: 2,
+            y: 1
         },
         course: {
             x: 0,
@@ -120,12 +128,14 @@ var planets = [
     },
     {
         id: "asteroid4",
+        title: "Желтый астероид",
         mass: 1e3,
         d: 1,
+        distance: 320e6,
         color: "#ffb300",
         location: {
-            x: l * -2,
-            y: l / 8
+            x: -2,
+            y: 1 / 8
         },
         course: {
             x: 0,
@@ -142,12 +152,14 @@ var planets = [
     },
     {
         id: "asteroid5",
+        title: "Фиолетовый астероид",
         mass: 5e3,
         d: 2,
+        distance: 200e6,
         color: "#ff00ff",
         location: {
-            x: l / -4,
-            y: l
+            x: 1 / -4,
+            y: 1
         },
         course: {
             x: 0,
@@ -252,6 +264,9 @@ $(function (){
     function planets_create(){
         cache.planet_selected = "earth";
         planets.forEach(function(item){
+            if (!v_is_null(item.location)){
+                item.location = v_mult(v_norm(item.location), item.distance);
+            }
             cache.location_map[item.id] = v_round(v_div(item.location, map));
             cache.draw_map[item.id] = v_clone(cache.location_map[item.id]);
             $('<div>').
@@ -263,7 +278,7 @@ $(function (){
                 appendTo("#body");
             $('<option>').
                 val(item.id).
-                text(item.id).
+                text(item.title).
                 attr("selected", cache.planet_selected == item.id).
                 appendTo("#planet_select");
             planets_calc_size();
