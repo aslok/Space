@@ -3,11 +3,11 @@ var height;
 var margin;
 var scroll = 0;
 
-// В одном пикселе полторы тысячи километров
+// В одном пикселе map метров
 var map;
 var map_start = 1.4e6;
 var map_end = 700e6;
-// В одном кадре 1000 виртуальных секунд
+// В одном кадре freq виртуальных секунд
 var freq = 250;
 
 $(function (){
@@ -17,6 +17,7 @@ $(function (){
     var v_debug = false;
     //v_debug = true;
 
+    // В одной реальной секунде draw_freq кадров
     var draw_freq = 100;
     // Гравитационная постоянная
     var G = 6.67408e-11;
@@ -24,9 +25,7 @@ $(function (){
     var map_height = $("#map_option").height() - $("#map_select").height();
 
     var cache = {
-        location_map: { },
         draw_map: { },
-        planet_size: { },
         planet_selected: "earth",
         brakes_state: true,
     };
@@ -59,7 +58,7 @@ $(function (){
             console.log(mess);
         }
     }
-    function v_log(v1, v2, color){
+    function v_draw(v1, v2, color){
         var canvas = document.getElementById("background").getContext("2d");
         canvas.beginPath();
         canvas.lineWidth = 1;
@@ -68,7 +67,7 @@ $(function (){
         canvas.lineTo(v2.x, v2.y);
         canvas.stroke();
     }
-    function v_log_circle(v, r, color){
+    function v_draw_circle(v, r, color){
         var canvas = document.getElementById("background").getContext("2d");
         canvas.beginPath();
         canvas.lineWidth = 1;
@@ -76,7 +75,7 @@ $(function (){
         canvas.arc(v.x, v.y, r, 0, 2 * Math.PI);
         canvas.stroke();
     }
-    function v_log_clear(){
+    function v_draw_clear(){
         var canvas = document.getElementById("background").getContext("2d");
         canvas.clearRect(0, 0, width, height);
         canvas.stroke();
@@ -129,6 +128,10 @@ $(function (){
     function v_rotate_90(v, angle){
         return !angle ? v : v_rotate_90({ x: v.y, y: -v.x }, angle - 90);
     }
+    // Вектор нулевой
+    function v_null(){
+        return { x: 0, y: 0 };
+    }
     // Вектор нулевой?
     function v_is_null(v){
         return !v.x && !v.y;
@@ -154,17 +157,16 @@ $(function (){
 
             var min_size = (width > height ? height : width) / 150;
             var d = item.d / map;
-            d < min_size ? d = min_size : 0;
-            cache.planet_size[item.id] = d;
-            var r = cache.planet_size[item.id] / 2;
-            $("#" + item.id).
-                css("width", cache.planet_size[item.id] + "px").
-                css("height", cache.planet_size[item.id] + "px").
+            item.size_map = d > min_size ? d : min_size;
+            var r = item.size_map / 2;
+            item.obj.
+                css("width", item.size_map + "px").
+                css("height", item.size_map + "px").
                 css("-moz-border-radius", r + "px").
                 css("-webkit-border-radius", r + "px").
                 css("border-radius", r + "px");
             // Очищаем кеш позиций для обновления
-            cache.draw_map[item.id] = { x: 0, y: 0 };
+            cache.draw_map[key] = v_null();
         }
         // Пересчитываем положение планет на экране и отображаем их
         planets_draw();
@@ -175,29 +177,29 @@ $(function (){
         do{
             for (var key in planets){
                 var item = planets[key];
-                /*log("item.id", item.id);
-                log('typeof done[item.id] != "undefined"', typeof done[item.id] != "undefined");
-                log("item.orbit == ''", item.orbit == "");
-                log('typeof done[item.orbit] == "undefined"', typeof done[item.orbit] == "undefined");*/
-                if (typeof done[item.id] != "undefined" || (item.orbit && typeof done[item.orbit] == "undefined")){
+                if (typeof done[key] != "undefined" || (item.orbit && typeof done[item.orbit] == "undefined")){
                     continue;
                 }
                 $("<div>").
-                    attr("id", item.id).
+                    attr("id", key).
                     css("background-color", item.color).
                     appendTo("#planets");
                 $("<option>").
-                    val(item.id).
+                    val(key).
                     text(item.title).
-                    attr("selected", cache.planet_selected == item.id).
+                    attr("selected", cache.planet_selected == key).
                     appendTo("#planet_select");
                 if (!v_is_null(item.location)){
                     item.location = vv_sum(done[item.orbit], v_mult(v_norm(item.location), item.distance));
                 }
-                cache.location_map[item.id] = v_round(v_div(item.location, map));
+                item.obj = $("#" + key);
+                item.speed = v_null();
+                item.accel = v_null();
+                item.size_map = 0;
+                item.location_map = v_round(v_div(item.location, map));
                 // Инициализируем кеш позиций для обновления
-                cache.draw_map[item.id] = { x: 0, y: 0 };
-                done[item.id] = item.location;
+                cache.draw_map[key] = v_null();
+                done[key] = item.location;
             }
         }while(obj_length(done) < planets.length);
     }
@@ -207,24 +209,22 @@ $(function (){
             var item1 = planets[key1];
             for (var key2 in planets){
                 var item2 = planets[key2];
-                if (item1.id == item2.id){
+                if (key1 == key2){
                     continue;
                 }
-                item2.course = v_norm(vv_diff(item2.location, item1.location));
+                var course = v_norm(vv_diff(item2.location, item1.location));
                 var r = vv_length(item1.location, item2.location);
-                // 2 * Math.PI * r
-
                 // v^2 = G * (M / R)
                 var v = Math.sqrt(G * (item1.mass / r));
                 item2.speed = vv_sum(
-                    v_mult(v_rotate(item2.course, 270), v),
+                    v_mult(v_rotate(course, 270), v),
                     item2.speed
                 );
                 // F = G * (m1 * m2 / r^2)
                 var F = G * (item2.mass * item1.mass / Math.pow(r, 2));
                 // a = F / m
-                var a = v_mult(item2.course, F / item2.mass);
-                // Добавляем ускорение от планеты item2
+                var a = v_mult(course, F / item2.mass);
+                // Добавляем ускорение направленное к item1 планете item2
                 item2.accel = vv_sum(item2.accel, a);
             }
         }
@@ -239,7 +239,7 @@ $(function (){
             // Пересчитываем текущее положение - добавляем текущую скорость умноженную на частоту
             // X = Xo + Vo * t
             item.location = vv_sum(item.location, v_mult(item.speed, freq));
-            cache.location_map[item.id] = v_round(v_div(item.location, map));
+            item.location_map = v_round(v_div(item.location, map));
         }
 
         // Складываем текущее ускорение от каждой планеты
@@ -249,19 +249,22 @@ $(function (){
             item1.accel = v_mult(item1.accel, 0);
             for (var key2 in planets){
                 var item2 = planets[key2];
-                if (item1.id == item2.id){
+                if (key1 == key2){
                     continue;
                 }
                 // log("=========================================================");
-                item1.course = v_norm(vv_diff(item1.location, item2.location));
+                var course = v_norm(vv_diff(item1.location, item2.location));
                 var r = vv_length(item1.location, item2.location);
                 // F = G * (m1 * m2 / r^2)
                 var F = G * item1.mass * item2.mass / Math.pow(r, 2);
                 // a = F / m
-                var a = v_mult(item1.course, F / item1.mass);
-                // Добавляем ускорение от планеты item2
+                var a = v_mult(course, F / item1.mass);
+                // Добавляем ускорение направленное к item2 планете item1
                 item1.accel = vv_sum(item1.accel, a);
-                //shuttle_move(item1, item2, r);
+
+                if (key1 == "shuttle" && key2 == cache.planet_selected){
+                    shuttle_move(item1, item2, r);
+                }
             }
         }
 
@@ -273,67 +276,63 @@ $(function (){
     // Пересчитываем положение планет на экране и отображаем их
     function planets_draw(){
         // Центруем выбранную планету на экране
-        var padding = vv_diff(cache.location_map[cache.planet_selected], margin);
+        var padding = vv_diff(planets[cache.planet_selected].location_map, margin);
         if (!v_is_null(padding)){
             for (var key in planets){
                 var item = planets[key];
                 item.location = vv_sum(item.location, v_mult(padding, map));
-                cache.location_map[item.id] = v_round(v_div(item.location, map));
+                item.location_map = v_round(v_div(item.location, map));
             }
         }
-        v_log_clear();
+        // Очищаем траектории орбит
+        v_draw_clear();
         // Отображаем планеты положение которых изменилось
         for (var key in planets){
             var item = planets[key];
-            if ($("#" + item.id).is(":visible")){
-                // Отображаем приблизительные траектории орбит
-                if (item.orbit){
-                    v_log_circle(
-                        cache.location_map[item.orbit],
-                        item.distance / map,
-                        "#222"
-                    );
-                }
-                if (v_debug){
-                    // Отображаем вектор ускорения
-                    v_log(
-                        cache.location_map[item.id],
-                        vv_sum(
-                            cache.location_map[item.id],
-                            v_round(v_mult(item.accel, 10000))
-                        ),
-                        "#ff0000"
-                    );
-                    // Отображаем вектор скорости
-                    v_log(
-                        cache.location_map[item.id],
-                        vv_sum(
-                            cache.location_map[item.id],
-                            v_round(v_div(item.speed, 1000))
-                        ),
-                        "#00ff00"
-                    );
-                }
+            // Отображаем приблизительные траектории орбит
+            if (item.orbit){
+                v_draw_circle(
+                    planets[item.orbit].location_map,
+                    item.distance / map,
+                    "#222"
+                );
             }
-            if (!v_is_null(vv_diff(cache.location_map[item.id], cache.draw_map[item.id]))){
-                cache.draw_map[item.id] = v_clone(cache.location_map[item.id]);
-                // Если планета в видемой области
-                if (cache.location_map[item.id].x > -5 && cache.location_map[item.id].y > -5 &&
-                    cache.location_map[item.id].x < width + 5 && cache.location_map[item.id].y < height + 5){
-                    var planet_center = v_sum(cache.draw_map[item.id], cache.planet_size[item.id] / -2);
-                    $("#" + item.id).
+            if (v_debug && item.obj.is(":visible")){
+                // Отображаем вектор ускорения
+                v_draw(
+                    item.location_map,
+                    vv_sum(
+                        item.location_map,
+                        v_round(v_mult(item.accel, 10000))
+                    ),
+                    "#ff0000"
+                );
+                // Отображаем вектор скорости
+                v_draw(
+                    item.location_map,
+                    vv_sum(
+                        item.location_map,
+                        v_round(v_div(item.speed, 1000))
+                    ),
+                    "#00ff00"
+                );
+            }
+            if (!v_is_null(vv_diff(item.location_map, cache.draw_map[key]))){
+                cache.draw_map[key] = v_clone(item.location_map);
+                // Если планета в видимой области
+                if (item.location_map.x > -5 && item.location_map.y > -5 &&
+                    item.location_map.x < width + 5 && item.location_map.y < height + 5){
+                    var planet_center = v_sum(cache.draw_map[key], item.size_map / -2);
+                    item.obj.
                         css("left", planet_center.x + "px").
                         css("top", planet_center.y + "px");
-                }
-                if (cache.location_map[item.id].x > -5 && cache.location_map[item.id].y > -5 &&
-                    cache.location_map[item.id].x < width + 5 && cache.location_map[item.id].y < height + 5){
-                    if ($("#" + item.id).is(":hidden")){
-                        $("#" + item.id).
+                    if (item.obj.is(":hidden")){
+                        item.obj.
                             show();
                     }
-                }else if ($("#" + item.id).is(":visible")){
-                        $("#" + item.id).
-                            hide();
+                }else if (item.obj.is(":visible")){
+                    item.obj.
+                        hide();
                 }
             }
         }
@@ -341,63 +340,61 @@ $(function (){
 
     var shuttle_distance = 0;
     function shuttle_move(item1, item2, r){
-        if (item1.id == "shuttle" &&
-                item2.id == cache.planet_selected){
-            if (!shuttle_distance){
-                shuttle_distance = r;
-            }
-            // Орбита по часовой
-            var clockwise = vv_mult(v_rotate(item1.course, 90), item1.speed);
-            // Если расстояние уменьшается
-            if (shuttle_distance - r >= 0){
-                // Увеличиваем скорость до предела
-                if (r > 60e6 &&
-                        shuttle_distance - r < 1000e3 &&
-                        // Если планета в той же стороне в которую направляемся
-                        vv_mult(item1.course, item1.speed) >= 0){
-                    $("#" + item1.id).
-                        css("background-color", "#fff000");
-                    item1.accel = vv_sum(
-                                        item1.accel,
-                                        v_mult(
-                                            clockwise > 0 ?
-                                                // Ускоряемся левее
-                                                v_rotate(item1.course, 15) :
-                                                // Ускоряемся правее
-                                                v_rotate(item1.course, 345),
-                                            item1.speed_accel
-                                        )
-                                    );
-                }else{
-                    $("#" + item1.id).
-                        css("background-color", "#ff0000");
-                }
-            // Если расстояние увеличивается
-            }else if (shuttle_distance - r < 0 && r > 45e6 && cache.brakes_state){
-                $("#" + item1.id).
-                    css("background-color", "#0000ff");
-                item1.accel = vv_sum(
-                                    item1.accel,
-                                    v_mult(
-                                        clockwise > 0 ?
-                                            v_rotate(item1.course, 350) :
-                                            v_rotate(item1.course, 10),
-                                        item1.speed_accel
-                                    )
-                                );
-            }else if (r < 40e6){
-                $("#" + item1.id).
+        if (!shuttle_distance){
+            shuttle_distance = r;
+        }
+        var course = v_norm(vv_diff(item1.location, item2.location));
+        // Орбита по часовой
+        var clockwise = vv_mult(v_rotate(course, 90), item1.speed);
+        // Если расстояние уменьшается
+        if (shuttle_distance - r >= 0){
+            // Увеличиваем скорость до предела
+            if (r > 60e6 &&
+                    shuttle_distance - r < 1000e3 &&
+                    // Если планета в той же стороне в которую направляемся
+                    vv_mult(course, item1.speed) >= 0){
+                item.obj.
                     css("background-color", "#fff000");
                 item1.accel = vv_sum(
                                     item1.accel,
                                     v_mult(
-                                        item1.course,
-                                        item1.speed_accel * 0.01
+                                        clockwise > 0 ?
+                                            // Ускоряемся левее
+                                            v_rotate(course, 15) :
+                                            // Ускоряемся правее
+                                            v_rotate(course, 345),
+                                        item1.speed_accel
                                     )
                                 );
+            }else{
+                item1.obj.
+                    css("background-color", "#ff0000");
             }
-            shuttle_distance = r;
+        // Если расстояние увеличивается
+        }else if (shuttle_distance - r < 0 && r > 45e6 && cache.brakes_state){
+            item1.obj.
+                css("background-color", "#0000ff");
+            item1.accel = vv_sum(
+                                item1.accel,
+                                v_mult(
+                                    clockwise > 0 ?
+                                        v_rotate(course, 350) :
+                                        v_rotate(course, 10),
+                                    item1.speed_accel
+                                )
+                            );
+        }else if (r < 40e6){
+            item1.obj.
+                css("background-color", "#fff000");
+            item1.accel = vv_sum(
+                                item1.accel,
+                                v_mult(
+                                    course,
+                                    item1.speed_accel * 0.01
+                                )
+                            );
         }
+        shuttle_distance = r;
     }
 
     $("#brakes").change(function(){

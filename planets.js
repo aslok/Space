@@ -1,6 +1,5 @@
-var planets = [
-    {
-        id: "sun",
+var planets = {
+    sun: {
         title: "Солнце",
         mass: 1.989e30,
         d: 1391400e3,
@@ -12,21 +11,8 @@ var planets = [
             x: 0,
             y: 0
         },
-        course: {
-            x: 0,
-            y: 0
-        },
-        speed: {
-            x: 0,
-            y: 0
-        },
-        accel: {
-            x: 0,
-            y: 0
-        },
     },
-    {
-        id: "mercury",
+    mercury: {
         title: "Меркурий",
         mass: 3.285e23,
         d: 4879e3,
@@ -38,21 +24,8 @@ var planets = [
             x: -1,
             y: 1
         },
-        course: {
-            x: 0,
-            y: 0
-        },
-        speed: {
-            x: 0,
-            y: 0
-        },
-        accel: {
-            x: 0,
-            y: 0
-        },
     },
-    {
-        id: "venus",
+    venus: {
         title: "Венера",
         mass: 4.8675e24,
         d: 12104e3,
@@ -64,21 +37,8 @@ var planets = [
             x: 5,
             y: -1
         },
-        course: {
-            x: 0,
-            y: 0
-        },
-        speed: {
-            x: 0,
-            y: 0
-        },
-        accel: {
-            x: 0,
-            y: 0
-        },
     },
-    {
-        id: "earth",
+    earth: {
         title: "Земля",
         mass: 5.9742e24,
         d: 12742e3,
@@ -90,21 +50,8 @@ var planets = [
             x: 1,
             y: 0
         },
-        course: {
-            x: 0,
-            y: 0
-        },
-        speed: {
-            x: 0,
-            y: 0
-        },
-        accel: {
-            x: 0,
-            y: 0
-        },
     },
-    {
-        id: "moon",
+    moon: {
         title: "Луна",
         mass: 7.36e22,
         d: 3474e3,
@@ -116,21 +63,8 @@ var planets = [
             x: 11,
             y: -1.24
         },
-        course: {
-            x: 0,
-            y: 0
-        },
-        speed: {
-            x: 0,
-            y: 0
-        },
-        accel: {
-            x: 0,
-            y: 0
-        },
     },/*
-    {
-        id: "asteroid3",
+    asteroid3: {
         title: "Синий астероид",
         mass: 100e3,
         d: 10,
@@ -142,21 +76,8 @@ var planets = [
             x: 2,
             y: 1
         },
-        course: {
-            x: 0,
-            y: 0
-        },
-        speed: {
-            x: -1e3,
-            y: -5e3
-        },
-        accel: {
-            x: 0,
-            y: 0
-        },
     },
-    {
-        id: "asteroid5",
+    asteroid5: {
         title: "Фиолетовый астероид",
         mass: 5e3,
         d: 2,
@@ -168,21 +89,8 @@ var planets = [
             x: 1 / -4,
             y: 1
         },
-        course: {
-            x: 0,
-            y: 0
-        },
-        speed: {
-            x: -7e3,
-            y: -3e3
-        },
-        accel: {
-            x: 0,
-            y: 0
-        },
     },*/
-    {
-        id: "shuttle",
+    shuttle: {
         title: "Шаттл",
         mass: 111e3,
         d: 37,
@@ -194,17 +102,5 @@ var planets = [
             x: 1,
             y: 0
         },
-        course: {
-            x: 0,
-            y: 0
-        },
-        speed: {
-            x: 0,
-            y: 0
-        },
-        accel: {
-            x: 0,
-            y: 0
-        },
     },
-];
+};
