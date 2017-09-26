@@ -1,13 +1,13 @@
 var planets = [
     {
-        id: "earth",
-        title: "Земля",
-        mass: 5.9742e24,
-        d: 12742e3,
-        orbit: "sun",
+        id: "sun",
+        title: "Солнце",
+        mass: 1.989e30,
+        d: 1391400e3,
+        orbit: "",
         distance: 0,
         speed_accel: 0,
-        color: "#88ff99",
+        color: "#ffb300",
         location: {
             x: 0,
             y: 0
@@ -26,17 +26,69 @@ var planets = [
         },
     },
     {
-        id: "sun",
-        title: "Солнце",
-        mass: 1.989e30,
-        d: 1391400e3,
-        orbit: "",
+        id: "mercury",
+        title: "Меркурий",
+        mass: 3.285e23,
+        d: 4879e3,
+        orbit: "sun",
+        distance: 57910e6,
+        speed_accel: 0,
+        color: "#00ffff",
+        location: {
+            x: -1,
+            y: 1
+        },
+        course: {
+            x: 0,
+            y: 0
+        },
+        speed: {
+            x: 0,
+            y: 0
+        },
+        accel: {
+            x: 0,
+            y: 0
+        },
+    },
+    {
+        id: "venus",
+        title: "Венера",
+        mass: 4.8675e24,
+        d: 12104e3,
+        orbit: "sun",
+        distance: 108200e6,
+        speed_accel: 0,
+        color: "#7b68ee",
+        location: {
+            x: 5,
+            y: -1
+        },
+        course: {
+            x: 0,
+            y: 0
+        },
+        speed: {
+            x: 0,
+            y: 0
+        },
+        accel: {
+            x: 0,
+            y: 0
+        },
+    },
+    {
+        id: "earth",
+        title: "Земля",
+        mass: 5.9742e24,
+        d: 12742e3,
+        orbit: "sun",
         distance: 149600e6,
         speed_accel: 0,
-        color: "#ffb300",
+        color: "#88ff99",
         location: {
-            x: 0,
-            y: 1
+            x: 1,
+            y: 0
         },
         course: {
             x: 0,
@@ -61,60 +113,8 @@ var planets = [
         speed_accel: 0,
         color: "#fff",
         location: {
-            x: 0,
-            y: -1
-        },
-        course: {
-            x: 0,
-            y: 0
-        },
-        speed: {
-            x: 0,
-            y: 0
-        },
-        accel: {
-            x: 0,
-            y: 0
-        },
-    },
-    {
-        id: "mercury",
-        title: "Меркурий",
-        mass: 3.285e23,
-        d: 4879e3,
-        orbit: "sun",
-        distance: 149600e6 - 57910e6,
-        speed_accel: 0,
-        color: "#00ffff",
-        location: {
-            x: 0,
-            y: 1
-        },
-        course: {
-            x: 0,
-            y: 0
-        },
-        speed: {
-            x: 0,
-            y: 0
-        },
-        accel: {
-            x: 0,
-            y: 0
-        },
-    },
-    {
-        id: "venus",
-        title: "Венера",
-        mass: 4.8675e24,
-        d: 12104e3,
-        orbit: "sun",
-        distance: 149600e6 - 108200e6,
-        speed_accel: 0,
-        color: "#7b68ee",
-        location: {
-            x: 0,
-            y: 1
+            x: 11,
+            y: -1.24
         },
         course: {
             x: 0,
@@ -187,12 +187,12 @@ var planets = [
         mass: 111e3,
         d: 37,
         orbit: "earth",
-        distance: 100e6,
+        distance: 5000e3,
         speed_accel: 15,
         color: "#ff0000",
         location: {
-            x: 0,
-            y: -1
+            x: 1,
+            y: 0
         },
         course: {
             x: 0,

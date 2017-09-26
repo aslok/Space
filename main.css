@@ -1,4 +1,5 @@
-html, body{
+html, body, #body, #background{
+    width: 100%;
     height: 100%;
     margin: 0;
     padding: 0;
@@ -7,19 +8,51 @@ html, body{
     overflow: hidden;
 }
 
-#map_select{
+#background, #planets{
+    position: fixed;
+    top: 0;
+    left: 0;
+}
+
+#background{
+    z-index: 0;
+}
+
+#planets{
+    z-index: 1;
+}
+
+#planets div{
     position: absolute;
-    margin: 10px 0 0 10px;
+}
+
+#map_select{
+    float: left;
     width: 20px;
     height: 200px;
+    margin-left: 10px;
     overflow-x: hidden;
     overflow-y: scroll;
 }
 
+#controls{
+    position: relative;
+    margin-top: 10px;
+    height: 0px;
+    z-index: 2;
+}
+
 #map_option{
+    float: left;
     height: 2200px;
 }
 
 #planet_select{
-    margin: 10px 0 0 40px;
+    float: left;
+    margin-left: 10px;
+}
+
+#brakes_control{
+    float: left;
+    margin-left: 10px;
 }

@@ -4,23 +4,30 @@ var margin;
 var scroll = 0;
 
 // В одном пикселе полторы тысячи километров
-var start_map = 700e6;
-var map = start_map;
-var freq = 0.01;
+var map;
+var map_start = 1.4e6;
+var map_end = 700e6;
+// В одном кадре 1000 виртуальных секунд
+var freq = 250;
 
 $(function (){
-    //var debug = false;
-    var debug = true;
+    var debug = false;
+    debug = true;
+
+    var v_debug = false;
+    //v_debug = true;
 
     var draw_freq = 100;
     // Гравитационная постоянная
     var G = 6.67408e-11;
 
+    var map_height = $("#map_option").height() - $("#map_select").height();
+
     var cache = {
         location_map: { },
         draw_map: { },
         planet_size: { },
-        planet_selected: "",
+        planet_selected: "earth",
         brakes_state: true,
     };
 
@@ -34,6 +41,13 @@ $(function (){
                     Date.now();
     }
     var time_start = time();
+    function obj_length(obj){
+        var cnt = 0;
+        for (var key in obj){
+            cnt++;
+        }
+        return cnt;
+    }
 
     function log(mess, val){
         if (!debug){
@@ -44,6 +58,28 @@ $(function (){
         }else{
             console.log(mess);
         }
+    }
+    function v_log(v1, v2, color){
+        var canvas = document.getElementById("background").getContext("2d");
+        canvas.beginPath();
+        canvas.lineWidth = 1;
+        canvas.strokeStyle = color;
+        canvas.moveTo(v1.x, v1.y);
+        canvas.lineTo(v2.x, v2.y);
+        canvas.stroke();
+    }
+    function v_log_circle(v, r, color){
+        var canvas = document.getElementById("background").getContext("2d");
+        canvas.beginPath();
+        canvas.lineWidth = 1;
+        canvas.strokeStyle = color;
+        canvas.arc(v.x, v.y, r, 0, 2 * Math.PI);
+        canvas.stroke();
+    }
+    function v_log_clear(){
+        var canvas = document.getElementById("background").getContext("2d");
+        canvas.clearRect(0, 0, width, height);
+        canvas.stroke();
     }
 
     // Сложение векторов
@@ -70,6 +106,10 @@ $(function (){
     function v_norm(v){
         var r = Math.sqrt(Math.pow(v.x, 2) + Math.pow(v.y, 2));
         return { x: v.x / r, y: v.y / r };
+    }
+    // Сложить вектор и скаляр
+    function v_sum(v, k){
+        return { x: v.x + k, y: v.y + k };
     }
     // Умножение вектора на скаляр
     function v_mult(v, k){
@@ -104,40 +144,7 @@ $(function (){
 
     // Считаем масштаб на экране
     function scroll_calc_map(){
-        map = start_map / 2000 * scroll + start_map / 500;
-    }
-    // Пересчитываем положение планет на экране и отображаем их
-    function planets_draw(){
-        // Центруем выбранную планету на экране
-        var padding = vv_diff(cache.location_map[cache.planet_selected], margin);
-        if (!v_is_null(padding)){
-            for (var key in planets){
-                var item = planets[key];
-                item.location = vv_sum(item.location, v_mult(padding, map));
-                cache.location_map[item.id] = v_round(v_div(item.location, map));
-            }
-        }
-        // Отображаем планеты положение которых изменилось
-        for (var key in planets){
-            var item = planets[key];
-            if (!v_is_null(vv_diff(cache.location_map[item.id], cache.draw_map[item.id]))){
-                cache.draw_map[item.id] = v_clone(cache.location_map[item.id]);
-                if (cache.location_map[item.id].x > -5 && cache.location_map[item.id].y > -5 &&
-                    cache.location_map[item.id].x < width + 5 && cache.location_map[item.id].y < height + 5){
-                    if ($("#" + item.id).is(":hidden")){
-                        $("#" + item.id).
-                            show();
-                    }
-                }else if ($("#" + item.id).is(":visible")){
-                        $("#" + item.id).
-                            hide();
-                }
-                var r = cache.planet_size[item.id] / 2;
-                $("#" + item.id).
-                    css("left", cache.draw_map[item.id].x - r + "px").
-                    css("top", cache.draw_map[item.id].y - r + "px");
-            }
-        }
+        map = map_start + map_end / 2000 * scroll;
     }
     // Пересчитываем размеры планет
     function planets_calc_size(){
@@ -164,25 +171,35 @@ $(function (){
     }
     // Инициализируем планеты
     function planets_create(){
-        for (var key in planets){
-            var item = planets[key];
-            $("<div>").
-                attr("id", item.id).
-                css("background-color", item.color).
-                css("position", "absolute").
-                appendTo("#body");
-            $("<option>").
-                val(item.id).
-                text(item.title).
-                attr("selected", cache.planet_selected == item.id).
-                appendTo("#planet_select");
-            if (!v_is_null(item.location)){
-                item.location = v_mult(v_norm(item.location), item.distance);
+        var done = { };
+        do{
+            for (var key in planets){
+                var item = planets[key];
+                /*log("item.id", item.id);
+                log('typeof done[item.id] != "undefined"', typeof done[item.id] != "undefined");
+                log("item.orbit == ''", item.orbit == "");
+                log('typeof done[item.orbit] == "undefined"', typeof done[item.orbit] == "undefined");*/
+                if (typeof done[item.id] != "undefined" || (item.orbit && typeof done[item.orbit] == "undefined")){
+                    continue;
+                }
+                $("<div>").
+                    attr("id", item.id).
+                    css("background-color", item.color).
+                    appendTo("#planets");
+                $("<option>").
+                    val(item.id).
+                    text(item.title).
+                    attr("selected", cache.planet_selected == item.id).
+                    appendTo("#planet_select");
+                if (!v_is_null(item.location)){
+                    item.location = vv_sum(done[item.orbit], v_mult(v_norm(item.location), item.distance));
+                }
+                cache.location_map[item.id] = v_round(v_div(item.location, map));
+                // Инициализируем кеш позиций для обновления
+                cache.draw_map[item.id] = { x: 0, y: 0 };
+                done[item.id] = item.location;
             }
-            cache.location_map[item.id] = v_round(v_div(item.location, map));
-            // Инициализируем кеш позиций для обновления
-            cache.draw_map[item.id] = { x: 0, y: 0 };
-        }
+        }while(obj_length(done) < planets.length);
     }
     // Задаем начальные скорости планет
     function planets_speed(){
@@ -195,20 +212,41 @@ $(function (){
                 }
                 item2.course = v_norm(vv_diff(item2.location, item1.location));
                 var r = vv_length(item1.location, item2.location);
+                // 2 * Math.PI * r
+
                 // v^2 = G * (M / R)
-                var v = Math.sqrt(G * (item1.mass / r)) * 9;
-                // Орбита по часовой
-                var clockwise = vv_mult(v_rotate(item2.course, 90), item2.speed);
+                var v = Math.sqrt(G * (item1.mass / r));
                 item2.speed = vv_sum(
                     v_mult(v_rotate(item2.course, 270), v),
                     item2.speed
                 );
+                // F = G * (m1 * m2 / r^2)
+                var F = G * (item2.mass * item1.mass / Math.pow(r, 2));
+                // a = F / m
+                var a = v_mult(item2.course, F / item2.mass);
+                // Добавляем ускорение от планеты item2
+                item2.accel = vv_sum(item2.accel, a);
             }
         }
     }
+    // Движение планет - периодически обновляем положение
     function planets_move(){
+        for (var key in planets){
+            var item = planets[key];
+            // Считаем текущую скорость складывая скорость и полученное ускорение
+            // V = Vo + a * t
+            item.speed = vv_sum(item.speed, v_mult(item.accel, freq), 0);
+            // Пересчитываем текущее положение - добавляем текущую скорость умноженную на частоту
+            // X = Xo + Vo * t
+            item.location = vv_sum(item.location, v_mult(item.speed, freq));
+            cache.location_map[item.id] = v_round(v_div(item.location, map));
+        }
+
+        // Складываем текущее ускорение от каждой планеты
         for (var key1 in planets){
             var item1 = planets[key1];
+            // Обнуляем ускорение
+            item1.accel = v_mult(item1.accel, 0);
             for (var key2 in planets){
                 var item2 = planets[key2];
                 if (item1.id == item2.id){
@@ -216,33 +254,89 @@ $(function (){
                 }
                 // log("=========================================================");
                 item1.course = v_norm(vv_diff(item1.location, item2.location));
-
                 var r = vv_length(item1.location, item2.location);
                 // F = G * (m1 * m2 / r^2)
                 var F = G * item1.mass * item2.mass / Math.pow(r, 2);
                 // a = F / m
-                var accel1 = v_mult(item1.course, F / item1.mass);
-
-                item1.accel = vv_sum(item1.accel, v_div(accel1, freq));
-
-                shuttle_move(item1, item2, r);
+                var a = v_mult(item1.course, F / item1.mass);
+                // Добавляем ускорение от планеты item2
+                item1.accel = vv_sum(item1.accel, a);
+                //shuttle_move(item1, item2, r);
             }
-        }
-
-        for (var key in planets){
-            var item = planets[key];
-            // log("=========================================================");
-            item.speed = vv_sum(item.speed, v_div(item.accel, freq));
-            item.accel = v_mult(item.accel, 0);
-
-            item.location = vv_sum(item.location, v_div(item.speed, freq));
-            cache.location_map[item.id] = v_round(v_div(item.location, map));
         }
 
         // Пересчитываем положение планет на экране и отображаем их
         planets_draw();
 
         setTimeout(planets_move, 1000 / draw_freq);
+    }
+    // Пересчитываем положение планет на экране и отображаем их
+    function planets_draw(){
+        // Центруем выбранную планету на экране
+        var padding = vv_diff(cache.location_map[cache.planet_selected], margin);
+        if (!v_is_null(padding)){
+            for (var key in planets){
+                var item = planets[key];
+                item.location = vv_sum(item.location, v_mult(padding, map));
+                cache.location_map[item.id] = v_round(v_div(item.location, map));
+            }
+        }
+        v_log_clear();
+        // Отображаем планеты положение которых изменилось
+        for (var key in planets){
+            var item = planets[key];
+            if ($("#" + item.id).is(":visible")){
+                // Отображаем приблизительные траектории орбит
+                if (item.orbit){
+                    v_log_circle(
+                        cache.location_map[item.orbit],
+                        item.distance / map,
+                        "#222"
+                    );
+                }
+                if (v_debug){
+                    // Отображаем вектор ускорения
+                    v_log(
+                        cache.location_map[item.id],
+                        vv_sum(
+                            cache.location_map[item.id],
+                            v_round(v_mult(item.accel, 10000))
+                        ),
+                        "#ff0000"
+                    );
+                    // Отображаем вектор скорости
+                    v_log(
+                        cache.location_map[item.id],
+                        vv_sum(
+                            cache.location_map[item.id],
+                            v_round(v_div(item.speed, 1000))
+                        ),
+                        "#00ff00"
+                    );
+                }
+            }
+            if (!v_is_null(vv_diff(cache.location_map[item.id], cache.draw_map[item.id]))){
+                cache.draw_map[item.id] = v_clone(cache.location_map[item.id]);
+                // Если планета в видемой области
+                if (cache.location_map[item.id].x > -5 && cache.location_map[item.id].y > -5 &&
+                    cache.location_map[item.id].x < width + 5 && cache.location_map[item.id].y < height + 5){
+                    var planet_center = v_sum(cache.draw_map[item.id], cache.planet_size[item.id] / -2);
+                    $("#" + item.id).
+                        css("left", planet_center.x + "px").
+                        css("top", planet_center.y + "px");
+                }
+                if (cache.location_map[item.id].x > -5 && cache.location_map[item.id].y > -5 &&
+                    cache.location_map[item.id].x < width + 5 && cache.location_map[item.id].y < height + 5){
+                    if ($("#" + item.id).is(":hidden")){
+                        $("#" + item.id).
+                            show();
+                    }
+                }else if ($("#" + item.id).is(":visible")){
+                        $("#" + item.id).
+                            hide();
+                }
+            }
+        }
     }
 
     var shuttle_distance = 0;
@@ -330,21 +424,20 @@ $(function (){
     });
     $('#body').
         bind("mousewheel DOMMouseScroll", function(event){
-            var scroll_max = $("#map_option").height() - $("#map_select").height();
             if (event.originalEvent && event.originalEvent.wheelDelta ?
                     event.originalEvent.wheelDelta < 0 :
                     event.originalEvent.detail > 0) {
-                if (scroll < scroll_max) {
-                    scroll = scroll + scroll_max / 2000;
-                    if (scroll > scroll_max){
-                        scroll = scroll_max;
+                if (scroll < map_height) {
+                    scroll = scroll + map_height / 2000;
+                    if (scroll > map_height){
+                        scroll = map_height;
                     }
                     $("#map_select").
                         scrollTop(scroll);
                 }
             } else {
                 if (scroll > 0) {
-                    scroll = scroll - scroll_max / 2000;
+                    scroll = scroll - map_height / 2000;
                     if (scroll < 0){
                         scroll = 0;
                     }
@@ -357,10 +450,13 @@ $(function (){
 
     $(window).resize(function(){
         $("#body").
-            height($(window).height() - 10);
+            height($(window).height());
         width = $("#body").width();
         height = $("#body").height();
         margin = v_round(v_div({ x: width, y: height }, 2));
+        $("#background").
+            attr("width", width).
+            attr("height", height);
         // Пересчитываем размеры планет
         planets_calc_size();
     });
@@ -380,6 +476,6 @@ $(function (){
     $("#brakes").
         prop("checked", cache.brakes_state).
         trigger("change");
-    // Запускаем движение планет
+    // Движение планет - периодически обновляем положение
     planets_move();
 });
