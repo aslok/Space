@@ -182,49 +182,75 @@ $(function (){
         // Пересчитываем положение планет на экране и отображаем их
         planets_draw();
     }
+    var satellite_cnt;
+    var orbit_index;
     // Инициализируем планеты
-    function planets_create(){
-        var done = { };
-        var orbit_index = [ ];
-        do{
+    function planets_create(orbit){
+        if (typeof orbit == "undefined" || !orbit){
+            orbit = "";
+            orbit_index = 0;
+            satellite_cnt = { };
             for (var key in planets){
                 var item = planets[key];
-                if (typeof done[key] != "undefined" || (item.orbit && typeof done[item.orbit] == "undefined")){
+                if (!item.orbit || key.indexOf("asteroid") >= 0){
                     continue;
                 }
-                orbit_index[key] = (item.orbit ? orbit_index[item.orbit] : parseInt($("#planets").css("z-index"))) - 1;
-                $("<div>").
-                    attr("id", key).
-                    attr("alt", item.title).
-                    attr("title", item.title).
-                    css("background-color", item.color ? item.color : "rgba(0, 0, 0, 0)").
-                    css("background-image", item.color ? "none" : 'url("img/' + key + '.png")').
-                    css("z-index", orbit_index[key]).
-                    appendTo("#planets");
-                item.obj = $("#" + key);
-                if (key.indexOf("asteroid") < 0){
-                    $("<option>").
-                        val(key).
-                        text(item.title).
-                        attr("selected", cache.planet_selected == key).
-                        appendTo("#planet_select");
-                }else{
-                    item.obj.
-                        addClass("asteroid");
+                if (typeof satellite_cnt[item.orbit] == "undefined"){
+                    satellite_cnt[item.orbit] = 0;
                 }
-                if (!v_is_null(item.location)){
-                    item.location = vv_sum(done[item.orbit], v_mult(v_norm(item.location), item.distance));
-                }
-                item.speed = v_null();
-                item.accel = v_null();
-                item.size_map = 0;
-                // Пересчитываем положение планет на экране
-                item.location_map = v_round(v_div(item.location, map));
-                // Инициализируем кеш позиций для обновления
-                cache.draw_map[key] = v_null();
-                done[key] = item.location;
+                satellite_cnt[item.orbit]++;
             }
-        }while(obj_length(done) < planets.length);
+        }
+        orbit_index++;
+
+        var siblings = orbit ? satellite_cnt[orbit] : 0;
+        for (var key in planets){
+            var item = planets[key];
+            if (item.orbit != orbit){
+                continue;
+            }
+            $("<div>").
+                attr("id", key).
+                attr("alt", item.title).
+                attr("title", item.title).
+                css("background-color", item.color ? item.color : "rgba(0, 0, 0, 0)").
+                css("background-image", item.color ? "none" : 'url("img/' + key + '.png")').
+                css("z-index", 101 - orbit_index).
+                appendTo("#planets");
+            item.obj = $("#" + key);
+            if (key.indexOf("asteroid") >= 0){
+                item.obj.
+                    addClass("asteroid");
+            }else{
+                var prefix = "";
+                if (orbit){
+                    for (var f = 1; f < orbit_index - 1; f++){
+                        prefix += "║&nbsp;&nbsp;&nbsp;&nbsp;";
+                    }
+                    prefix += (--siblings ? "╠══" : "╚══") +
+                                (typeof satellite_cnt[key] != "undefined" ? "╦═" : "══") +
+                                "&nbsp;";
+                }
+                $("<option>").
+                    val(key).
+                    html(prefix + item.title).
+                    attr("selected", cache.planet_selected == key).
+                    appendTo("#planet_select");
+            }
+            if (item.distance){
+                item.location = vv_sum(planets[item.orbit].location, v_mult(v_norm(item.location), item.distance));
+            }
+            item.speed = v_null();
+            item.accel = v_null();
+            item.size_map = 0;
+            // Пересчитываем положение планеты на экране
+            item.location_map = v_round(v_div(item.location, map));
+            // Инициализируем кеш позиций для обновления
+            cache.draw_map[key] = v_null();
+            // Создаем спутники планеты
+            planets_create(key);
+        }
+        orbit_index--;
     }
     // Задаем начальные скорости планет
     function planets_speed(){
