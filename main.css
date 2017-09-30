@@ -13,46 +13,45 @@ html, body, #body, #background{
     top: 0;
     left: 0;
 }
-
 #background{
     z-index: 0;
 }
-
 #planets{
-    z-index: 1;
+    z-index: 100;
 }
-
-#planets div{
+#planets > div{
     position: absolute;
+    cursor: pointer;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
 }
 
-#map_select{
-    float: left;
-    width: 20px;
-    height: 200px;
-    margin-left: 10px;
-    overflow-x: hidden;
-    overflow-y: scroll;
+#planets .asteroid{
+    /*cursor: auto;*/
 }
 
 #controls{
     position: relative;
     margin-top: 10px;
     height: 0px;
-    z-index: 2;
+    z-index: 101;
+}
+#controls > div{
+    float: left;
+    margin-left: 10px;
+}
+#controls #fps{
+    float: right;
+    margin-right: 10px;
 }
 
+#map_select{
+    width: 20px;
+    height: 200px;
+    overflow-x: hidden;
+    overflow-y: scroll;
+}
 #map_option{
-    float: left;
     height: 2200px;
-}
-
-#planet_select{
-    float: left;
-    margin-left: 10px;
-}
-
-#brakes_control{
-    float: left;
-    margin-left: 10px;
 }
