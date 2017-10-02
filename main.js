@@ -15,7 +15,7 @@ $(function (){
     debug = true;
 
     var v_debug = false;
-    v_debug = true;
+    //v_debug = true;
 
     // В одной реальной секунде draw_freq кадров, если 0 то без ограничений
     var draw_freq = 0;
