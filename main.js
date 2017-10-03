@@ -28,7 +28,6 @@ $(function (){
 
     var cache = {
         draw_map: { },
-        planet_selected: "earth",
     };
 
     // Время прошедшее со старта скрипта в мксек до тысячных
@@ -235,11 +234,12 @@ $(function (){
                 css("-moz-border-radius", (item.color ? r : 0) + "px").
                 css("-webkit-border-radius", (item.color ? r : 0) + "px").
                 css("border-radius", (item.color ? r : 0) + "px");
-            cache.draw_map[key] = v_new(0, 0);
+            draw_map[key] = v_new(0, 0);
         }
         // Пересчитываем положение планет на экране и отображаем их
         planets_draw();
     }
+    var draw_map = { };
     var satellite_cnt;
     var orbit_index;
     // Инициализируем планеты
@@ -267,7 +267,7 @@ $(function (){
             if (item.orbit != orbit){
                 continue;
             }
-            $("<div>").
+            item.obj = $("<div>").
                 attr("id", key).
                 attr("alt", item.title).
                 attr("title", item.title).
@@ -285,7 +285,6 @@ $(function (){
                         trigger("change");
                 }).
                 appendTo("#planets");
-            item.obj = $("#" + key);
             if (key.indexOf("asteroid") >= 0){
                 item.obj.
                     addClass("asteroid");
@@ -302,7 +301,7 @@ $(function (){
                 $("<option>").
                     val(key).
                     html(prefix + item.title).
-                    attr("selected", cache.planet_selected == key).
+                    attr("selected", planet_selected == key).
                     appendTo("#planet_select");
             }
             if (item.distance){
@@ -314,7 +313,7 @@ $(function (){
             // Пересчитываем положение планеты на экране
             item.location_map = v_div(item.location, map);
             // Инициализируем кеш позиций для обновления
-            cache.draw_map[key] = v_new(0, 0);
+            draw_map[key] = v_new(0, 0);
             // Создаем спутники планеты
             planets_create(key);
         }
@@ -376,7 +375,7 @@ $(function (){
                 // Добавляем планете item1 ускорение направленное к item2
                 item1.accel = vv_sum(item1.accel, a);
 
-                /*if (key1 == "shuttle" && key2 == cache.planet_selected){
+                /*if (key1 == "shuttle" && key2 == planet_selected){
                     shuttle_move(item1, item2, r);
                 }*/
             }
@@ -393,11 +392,13 @@ $(function (){
             planets_speed(frequency);
         }
         //show_speed_accel("shuttle", location_map);
+        show_speed_accel("shuttle");
         // Столкновения планет
         planets_clash();
-        // Пересчитываем положение планет на экране и отображаем их
-        planets_draw();
-        show_speed_accel("shuttle");
+        if (!maneuver){
+            // Пересчитываем положение планет на экране и отображаем их
+            planets_draw();
+        }
         // Отображаем количество кадров за последнюю секунду
         show_fps();
         // Считаем игровую дату
@@ -407,7 +408,7 @@ $(function (){
     // Пересчитываем положение планет на экране и отображаем их
     function planets_draw(){
         // Центруем выбранную планету на экране
-        var padding = vv_diff(planets[cache.planet_selected].location_map, margin);
+        var padding = vv_diff(planets[planet_selected].location_map, margin);
         if (!v_is_null(padding)){
             for (var key in planets){
                 var item = planets[key];
@@ -429,11 +430,11 @@ $(function (){
                     "#444"
                 );
             }
-            if (!v_is_null(vv_diff(item.location_map, cache.draw_map[key]))){
-                cache.draw_map[key] = v_clone(item.location_map);
+            if (!v_is_null(vv_diff(item.location_map, draw_map[key]))){
+                draw_map[key] = v_clone(item.location_map);
                 // Если планета в видимой области
                 if (v_in_rectangle(item.location_map, v_new(-5, -5), screen_size)){
-                    var obj_position = v_sum(cache.draw_map[key], item.size_map / -2);
+                    var obj_position = v_sum(draw_map[key], item.size_map / -2);
                     item.obj.
                         css("left", obj_position.x + "px").
                         css("top", obj_position.y + "px");
@@ -468,12 +469,23 @@ $(function (){
                 planets_calc_size();
                 $("#planet_select > option[value=" + key1 + "]").
                     remove();
-                if (key1 == cache.planet_selected){
-                    cache.planet_selected = key2;
+                if (key1 == planet_selected){
+                    planet_selected = key2;
                 }
                 delete planets[key1];
             }
         }
+    }
+    var maneuver = false;
+    function maneuvering(event){
+        if ($(event.target).prop("tagName").toLowerCase() == "select" ||
+            $(event.target).prop("tagName").toLowerCase() == "option" ||
+            $(event.target).attr("id") == "map_option" ||
+            $(event.target).attr("id") == "map_select"){
+            return false;
+        }
+        maneuver = !maneuver;
+        return false;
     }
 
     var date = time() + 3.1536e12;
@@ -639,10 +651,12 @@ $(function (){
         planets_calc_size();
     }
 
+    var planet_selected = "earth";
     // Центровка экрана по заданной планете
     $("#planet_select").
         change(function(){
-            cache.planet_selected = $("#planet_select").val();
+            planet_selected = $("#planet_select").val();
+            planets_draw();
         });
     // Скролл с помощью лифта в углу
     $("#map_select").
@@ -658,9 +672,11 @@ $(function (){
     $(window).
         resize(set_screen_size);
     $('#body').
+        bind("click", maneuvering).
         // Скролл с помощью колесика в любой части экрана
         bind("mousewheel DOMMouseScroll", function(event){
-            if ($(event.target).prop("tagName").toLowerCase() == "option" ||
+            if ($(event.target).prop("tagName").toLowerCase() == "select" ||
+                $(event.target).prop("tagName").toLowerCase() == "option" ||
                 $(event.target).attr("id") == "map_option" ||
                 $(event.target).attr("id") == "map_select"){
                 return false;
@@ -681,42 +697,54 @@ $(function (){
             // Нажали и тянем вниз - крупнее
             bind("pandown",
                 function (event) {
-                    if ($(event.gesture.target).prop("tagName").toLowerCase() == "option" ||
+                    if ($(event.gesture.target).prop("tagName").toLowerCase() == "select" ||
+                        $(event.gesture.target).prop("tagName").toLowerCase() == "option" ||
                         $(event.gesture.target).attr("id") == "map_option" ||
-                        $(event.gesture.target).attr("id") == "map_select"){
+                        $(event.gesture.target).attr("id") == "map_select" ||
+                        maneuver){
                         return false;
                     }
                     scroll_up(scroll * 0.6 / 25 + 1);
+                    return false;
                 }).
             // Нажали и тянем вверх - мельче
             bind("panup",
                 function (event) {
-                    if ($(event.gesture.target).prop("tagName").toLowerCase() == "option" ||
+                    if ($(event.gesture.target).prop("tagName").toLowerCase() == "select" ||
+                        $(event.gesture.target).prop("tagName").toLowerCase() == "option" ||
                         $(event.gesture.target).attr("id") == "map_option" ||
-                        $(event.gesture.target).attr("id") == "map_select"){
+                        $(event.gesture.target).attr("id") == "map_select" ||
+                        maneuver){
                         return false;
                     }
                     scroll_down(scroll * 1.666666667 / 25 + 1);
+                    return false;
                 }).
             // Разодим два пальца - крупнее
             bind("pinchout",
                 function (event) {
-                    if ($(event.gesture.target).prop("tagName").toLowerCase() == "option" ||
+                    if ($(event.gesture.target).prop("tagName").toLowerCase() == "select" ||
+                        $(event.gesture.target).prop("tagName").toLowerCase() == "option" ||
                         $(event.gesture.target).attr("id") == "map_option" ||
-                        $(event.gesture.target).attr("id") == "map_select"){
+                        $(event.gesture.target).attr("id") == "map_select" ||
+                        maneuver){
                         return false;
                     }
                     scroll_up(scroll * 0.6 * event.gesture.distance / 1000 + 1);
+                    return false;
                 }).
             // Сводим два пальца - мельче
             bind("pinchin",
                 function (event) {
-                    if ($(event.gesture.target).prop("tagName").toLowerCase() == "option" ||
+                    if ($(event.gesture.target).prop("tagName").toLowerCase() == "select" ||
+                        $(event.gesture.target).prop("tagName").toLowerCase() == "option" ||
                         $(event.gesture.target).attr("id") == "map_option" ||
-                        $(event.gesture.target).attr("id") == "map_select"){
+                        $(event.gesture.target).attr("id") == "map_select" ||
+                        maneuver){
                         return false;
                     }
                     scroll_down(scroll * 1.666666667 * event.gesture.distance / 500 + 1);
+                    return false;
                 });
     $("#body").
         data("hammer").get("pan").set({ enable: true, direction: Hammer.DIRECTION_VERTICAL });
