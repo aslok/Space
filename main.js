@@ -31,15 +31,18 @@ $(function (){
         planet_selected: "earth",
     };
 
+    // Время прошедшее со старта скрипта в мксек до тысячных
     function uptime(){
         return time() - time_start;
     }
+    // Текущее время в мксек до тысячных
     function time(){
         return window.performance && window.performance.now &&
                 window.performance.timing && window.performance.timing.navigationStart ?
                     window.performance.now() + window.performance.timing.navigationStart :
                     Date.now();
     }
+    // Время старта скрипта в мксек до тысячных
     var time_start = time();
     function obj_length(obj){
         var cnt = 0;
@@ -49,6 +52,7 @@ $(function (){
         return cnt;
     }
 
+    // Логирование mess = val
     function log(mess, val){
         if (!debug){
             return;
@@ -59,6 +63,7 @@ $(function (){
             console.log(mess);
         }
     }
+    // Рисуем линию между двумя векторами цвета color
     function v_draw(v1, v2, color){
         var canvas = document.getElementById("background").getContext("2d");
         canvas.beginPath();
@@ -68,6 +73,7 @@ $(function (){
         canvas.lineTo(v2.x, v2.y);
         canvas.stroke();
     }
+    // Рисуем круг из центра v цвета color
     function v_draw_circle(v, r, color){
         var canvas = document.getElementById("background").getContext("2d");
         canvas.beginPath();
@@ -76,6 +82,7 @@ $(function (){
         canvas.arc(v.x, v.y, r, 0, 2 * Math.PI);
         canvas.stroke();
     }
+    // Очищаем рабочую область
     function v_draw_clear(){
         var canvas = document.getElementById("background").getContext("2d");
         canvas.clearRect(0, 0, screen_size.x, screen_size.y);
@@ -155,18 +162,21 @@ $(function (){
     function v_round(v){
         return v_new(Math.round(v.x), Math.round(v.y));
     }
+    // Вектор попадает в прямоугольник между v_topleft и v_downright
     function v_in_rectangle(v, v_topleft, v_downright){
         return v.x > v_topleft.x && v.y > v_topleft.y && v.x < v_downright.x && v.y < v_downright.y ?
             true :
             false;
     }
+    // Градусы в радианы
     Math.deg2rad = function(degrees) {
       return degrees * Math.PI / 180;
     };
-
+    // Радианы в градусы
     Math.rad2deg = function(radians) {
       return radians * 180 / Math.PI;
     };
+    // Отображаем скорость и ускорение планеты id. Можно указать из какой точки в location_map
     function show_speed_accel(id, location_map){
         if (!v_debug){
             return;
@@ -264,6 +274,16 @@ $(function (){
                 css("background-color", item.color ? item.color : "rgba(0, 0, 0, 0)").
                 css("background-image", item.color ? "none" : 'url("img/' + key + '.png")').
                 css("z-index", 101 - orbit_index).
+                // Обрабатываем клики на планетах
+                click(function (){
+                    var id = $(this).attr("id");
+                    if (!$("#planet_select > option[value=\"" + id + "\"").length){
+                        return;
+                    }
+                    $("#planet_select").
+                        val(id).
+                        trigger("change");
+                }).
                 appendTo("#planets");
             item.obj = $("#" + key);
             if (key.indexOf("asteroid") >= 0){
@@ -428,6 +448,7 @@ $(function (){
             }
         }
     }
+    // Столкновения планет
     function planets_clash(){
         for (var key1 in planets){
             var item1 = planets[key1];
@@ -456,6 +477,7 @@ $(function (){
     }
 
     var date = time() + 3.1536e12;
+    // Считаем игровую дату
     function calc_date(){
         date += freq * 1000;
     }
@@ -480,6 +502,7 @@ $(function (){
     }
 
     var angle_prev = 0;
+    // Считаем искусственное ускорение шаттла
     function shuttle_move(item1, item2, r){
         return;
         var course = v_norm(vv_diff(item1.location, item2.location));
@@ -549,6 +572,7 @@ $(function (){
         //var course_ok = vv_mult(speed, v_rotate(course, 90)) > 0 && vv_mult(speed, v_rotate(course, 274)) > 0;
     }
 
+    // Генерирует заданное количество планет по шаблону
     function planets_generator(id, title, cnt, key, r_min, r_max, mass_min, mass_max, color){
         var r_2_min = Math.pow(r_min, 2);
         var r_2_max = Math.pow(r_max, 2);
@@ -569,6 +593,7 @@ $(function (){
             };
         }
     }
+    // Скролл вверх (сделать крупнее)
     function scroll_up(k){
         if (scroll > 0) {
             var dec = map_height / 2000;
@@ -583,6 +608,7 @@ $(function (){
                 scrollTop(scroll);
         }
     }
+    // Скролл вниз (сделать мельче)
     function scroll_down(k){
         if (scroll < map_height) {
             var inc = map_height / 2000;
@@ -613,10 +639,12 @@ $(function (){
         planets_calc_size();
     }
 
+    // Центровка экрана по заданной планете
     $("#planet_select").
         change(function(){
             cache.planet_selected = $("#planet_select").val();
         });
+    // Скролл с помощью лифта в углу
     $("#map_select").
         scroll(function (){
             scroll = $("#map_select").scrollTop();
@@ -626,7 +654,11 @@ $(function (){
             planets_calc_size();
             return false;
         });
+    // Пересчитываем размер экрана и размеры планет на нем
+    $(window).
+        resize(set_screen_size);
     $('#body').
+        // Скролл с помощью колесика в любой части экрана
         bind("mousewheel DOMMouseScroll", function(event){
             if ($(event.target).prop("tagName").toLowerCase() == "option" ||
                 $(event.target).attr("id") == "map_option" ||
@@ -643,12 +675,10 @@ $(function (){
                 scroll_up(scroll * 0.6 / 10 + 1);
             }
             return false;
-        });
-
-    $(window).resize(set_screen_size);
-    $("#body").
+        }).
+        // Скролл с помощью пальцев в любой части экрана
         hammer().
-            // Нажали и тянем
+            // Нажали и тянем вниз - крупнее
             bind("pandown",
                 function (event) {
                     if ($(event.gesture.target).prop("tagName").toLowerCase() == "option" ||
@@ -658,6 +688,7 @@ $(function (){
                     }
                     scroll_up(scroll * 0.6 / 25 + 1);
                 }).
+            // Нажали и тянем вверх - мельче
             bind("panup",
                 function (event) {
                     if ($(event.gesture.target).prop("tagName").toLowerCase() == "option" ||
@@ -667,6 +698,7 @@ $(function (){
                     }
                     scroll_down(scroll * 1.666666667 / 25 + 1);
                 }).
+            // Разодим два пальца - крупнее
             bind("pinchout",
                 function (event) {
                     if ($(event.gesture.target).prop("tagName").toLowerCase() == "option" ||
@@ -676,6 +708,7 @@ $(function (){
                     }
                     scroll_up(scroll * 0.6 * event.gesture.distance / 1000 + 1);
                 }).
+            // Сводим два пальца - мельче
             bind("pinchin",
                 function (event) {
                     if ($(event.gesture.target).prop("tagName").toLowerCase() == "option" ||
@@ -689,7 +722,10 @@ $(function (){
         data("hammer").get("pan").set({ enable: true, direction: Hammer.DIRECTION_VERTICAL });
     $("#body").
         data("hammer").get("pinch").set({ enable: true });
+
     // log("======================= START ============================");
+
+    // Генерируем дополнительные планеты
     planets_generator("asteroid_belt_", "Пояс астероидов", 50, "sun", 2.2 * ua, 3.6 * ua, 15e16, 12e17, "#595959");
     planets_generator("asteroid_centaur_", "Кентавры", 8, "sun", 15.87 * ua, 25.157 * ua, 2e17, 2e19, "#595959");
     planets_generator("asteroid_kuiper_", "Пояс Койпера", 12, "sun", 29.57 * ua, 101 * ua, 36e19, 16e21, "#595959");
@@ -704,14 +740,6 @@ $(function (){
     // Выбираем текущую планету
     $("#planet_select").
         trigger("change");
-    $("#planets > div").click(function (){
-        if (!$("#planet_select > option[value=\"" + $(this).attr("id") + "\"").length){
-            return;
-        }
-        $("#planet_select").
-            val($(this).attr("id")).
-            trigger("change");
-    });
     // Задаем начальные скорости планет
     planets_speed_start();
     // Движение планет - периодически обновляем положение
