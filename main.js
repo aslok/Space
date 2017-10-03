@@ -283,6 +283,7 @@ $(function (){
                     $("#planet_select").
                         val(id).
                         trigger("change");
+                    return false;
                 }).
                 appendTo("#planets");
             if (key.indexOf("asteroid") >= 0){
@@ -383,26 +384,26 @@ $(function (){
     }
     // Движение планет - периодически обновляем положение
     function planets_move(){
-        //var location_map = show_speed_accel("shuttle");
-        var frequency = freq / 20;
-        for (var f = 0; f < 10; f++){
-            // Пересчитываем ускорения от гравитации планет
-            planets_accel();
-            // Пересчитываем скорости и положение планет
-            planets_speed(frequency);
-        }
-        //show_speed_accel("shuttle", location_map);
-        show_speed_accel("shuttle");
-        // Столкновения планет
-        planets_clash();
         if (!maneuver){
+            //var location_map = show_speed_accel("shuttle");
+            var frequency = freq / 20;
+            for (var f = 0; f < 10; f++){
+                // Пересчитываем ускорения от гравитации планет
+                planets_accel();
+                // Пересчитываем скорости и положение планет
+                planets_speed(frequency);
+            }
+            //show_speed_accel("shuttle", location_map);
+            show_speed_accel("shuttle");
+            // Столкновения планет
+            planets_clash();
             // Пересчитываем положение планет на экране и отображаем их
             planets_draw();
+            // Считаем игровую дату
+            calc_date();
         }
         // Отображаем количество кадров за последнюю секунду
         show_fps();
-        // Считаем игровую дату
-        calc_date();
         setTimeout(planets_move, !draw_freq ? 0 : 1000 / draw_freq);
     }
     // Пересчитываем положение планет на экране и отображаем их
@@ -476,15 +477,18 @@ $(function (){
             }
         }
     }
+    function draw_trajectory(){
+
+    }
     var maneuver = false;
     function maneuvering(event){
-        if ($(event.target).prop("tagName").toLowerCase() == "select" ||
-            $(event.target).prop("tagName").toLowerCase() == "option" ||
-            $(event.target).attr("id") == "map_option" ||
-            $(event.target).attr("id") == "map_select"){
+        if (event_disabled(event)){
             return false;
         }
         maneuver = !maneuver;
+        if (maneuver){
+            draw_trajectory();
+        }
         return false;
     }
 
@@ -650,6 +654,12 @@ $(function (){
         // Пересчитываем размеры планет
         planets_calc_size();
     }
+    function event_disabled(event){
+        return $(event.target).prop("tagName").toLowerCase() == "select" ||
+                $(event.target).prop("tagName").toLowerCase() == "option" ||
+                $(event.target).attr("id") == "map_option" ||
+                $(event.target).attr("id") == "map_select";
+    }
 
     var planet_selected = "earth";
     // Центровка экрана по заданной планете
@@ -675,10 +685,7 @@ $(function (){
         bind("click", maneuvering).
         // Скролл с помощью колесика в любой части экрана
         bind("mousewheel DOMMouseScroll", function(event){
-            if ($(event.target).prop("tagName").toLowerCase() == "select" ||
-                $(event.target).prop("tagName").toLowerCase() == "option" ||
-                $(event.target).attr("id") == "map_option" ||
-                $(event.target).attr("id") == "map_select"){
+            if (event_disabled(event)){
                 return false;
             }
             $("#map_option").
@@ -697,11 +704,7 @@ $(function (){
             // Нажали и тянем вниз - крупнее
             bind("pandown",
                 function (event) {
-                    if ($(event.gesture.target).prop("tagName").toLowerCase() == "select" ||
-                        $(event.gesture.target).prop("tagName").toLowerCase() == "option" ||
-                        $(event.gesture.target).attr("id") == "map_option" ||
-                        $(event.gesture.target).attr("id") == "map_select" ||
-                        maneuver){
+                    if (event_disabled(event.gesture) || maneuver){
                         return false;
                     }
                     scroll_up(scroll * 0.6 / 25 + 1);
@@ -710,11 +713,7 @@ $(function (){
             // Нажали и тянем вверх - мельче
             bind("panup",
                 function (event) {
-                    if ($(event.gesture.target).prop("tagName").toLowerCase() == "select" ||
-                        $(event.gesture.target).prop("tagName").toLowerCase() == "option" ||
-                        $(event.gesture.target).attr("id") == "map_option" ||
-                        $(event.gesture.target).attr("id") == "map_select" ||
-                        maneuver){
+                    if (event_disabled(event.gesture) || maneuver){
                         return false;
                     }
                     scroll_down(scroll * 1.666666667 / 25 + 1);
@@ -723,11 +722,7 @@ $(function (){
             // Разодим два пальца - крупнее
             bind("pinchout",
                 function (event) {
-                    if ($(event.gesture.target).prop("tagName").toLowerCase() == "select" ||
-                        $(event.gesture.target).prop("tagName").toLowerCase() == "option" ||
-                        $(event.gesture.target).attr("id") == "map_option" ||
-                        $(event.gesture.target).attr("id") == "map_select" ||
-                        maneuver){
+                    if (event_disabled(event.gesture) || maneuver){
                         return false;
                     }
                     scroll_up(scroll * 0.6 * event.gesture.distance / 1000 + 1);
@@ -736,11 +731,7 @@ $(function (){
             // Сводим два пальца - мельче
             bind("pinchin",
                 function (event) {
-                    if ($(event.gesture.target).prop("tagName").toLowerCase() == "select" ||
-                        $(event.gesture.target).prop("tagName").toLowerCase() == "option" ||
-                        $(event.gesture.target).attr("id") == "map_option" ||
-                        $(event.gesture.target).attr("id") == "map_select" ||
-                        maneuver){
+                    if (event_disabled(event.gesture) || maneuver){
                         return false;
                     }
                     scroll_down(scroll * 1.666666667 * event.gesture.distance / 500 + 1);
