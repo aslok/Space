@@ -340,7 +340,7 @@ var planets = {
         mass: 111e3,
         d: 37,
         orbit: "earth",
-        distance: 8e6,
+        distance: 12.742e6 / 2 + 60e3,
         speed_accel: 1,
         color: "#ff0000",
         rings: 0,

@@ -380,6 +380,8 @@ $(function (){
         show_speed_accel("shuttle");
         // Отображаем количество кадров за последнюю секунду
         show_fps();
+        // Считаем игровую дату
+        calc_date();
         setTimeout(planets_move, !draw_freq ? 0 : 1000 / draw_freq);
     }
     // Пересчитываем положение планет на экране и отображаем их
@@ -453,6 +455,10 @@ $(function (){
         }
     }
 
+    var date = time() + 3.1536e12;
+    function calc_date(){
+        date += freq * 1000;
+    }
     var fps = draw_freq;
     var time_prev = 0;
     var fps_cnt = 0;
@@ -463,6 +469,10 @@ $(function (){
             fps = fps_cnt;
             $("#fps").
                 text(fps + " fps");
+            var date_obj = new Date(date);
+            var time_arr = date_obj.toTimeString().split(" ")[0].split(":");
+            $("#date").
+                text(date_obj.toLocaleDateString() + " " + time_arr[0] + ":" + time_arr[1]);
             fps_cnt = 0;
             time_prev = time;
         }
@@ -664,7 +674,7 @@ $(function (){
                         $(event.gesture.target).attr("id") == "map_select"){
                         return false;
                     }
-                    scroll_up(scroll * 0.6 / 10 + 1);
+                    scroll_up(scroll * 0.6 * event.gesture.distance / 1000 + 1);
                 }).
             bind("pinchin",
                 function (event) {
@@ -673,7 +683,7 @@ $(function (){
                         $(event.gesture.target).attr("id") == "map_select"){
                         return false;
                     }
-                    scroll_down(scroll * 1.666666667 / 10 + 1);
+                    scroll_down(scroll * 1.666666667 * event.gesture.distance / 500 + 1);
                 });
     $("#body").
         data("hammer").get("pan").set({ enable: true, direction: Hammer.DIRECTION_VERTICAL });

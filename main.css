@@ -37,11 +37,18 @@ html, body, #body, #background{
     height: 0px;
     z-index: 101;
 }
-#controls > div{
+#footer{
+    position: fixed;
+    bottom: 30px;
+    width: 100%;
+    height: 0px;
+    z-index: 102;
+}
+#controls > div, #footer > div{
     float: left;
     margin-left: 10px;
 }
-#controls #fps{
+#controls #fps, #footer #date{
     float: right;
     margin-right: 10px;
 }
